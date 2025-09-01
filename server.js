@@ -31,7 +31,9 @@ app.set('io', io);
 // Use routes
 app.use('/api', routes);
 
-// DB Connection
+console.log("Mongo URI being used:", process.env.MONGO_URI);
+
+
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected');
