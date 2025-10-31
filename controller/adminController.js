@@ -1,0 +1,263 @@
+const Driver = require('../models/Driver');
+const Notification = require('../models/Notification');
+const Shipment = require('../models/Shipment');
+
+// Get drivers by vehicle type
+const getDriversByVehicleType = async (req, res) => {
+  const { vehicleType } = req.params;
+  try {
+    const drivers = await Driver.find({ 
+      status: 'approved', 
+      vehicleType: vehicleType 
+    }).select('-password');
+    res.status(200).json({ drivers });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get all pending drivers
+const getPendingDrivers = async (req, res) => {
+  try {
+    const drivers = await Driver.find({ status: 'pending' }).select('-password');
+    res.status(200).json({ drivers });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get all accepted drivers
+const getAcceptedDrivers = async (req, res) => {
+  try {
+    const drivers = await Driver.find({ status: 'approved' }).select('-password');
+    res.status(200).json({ drivers });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Approve/Reject driver
+const updateDriverStatus = async (req, res) => {
+  const { driverId, status } = req.body;
+  console.log('Received:', { driverId, status });
+  
+  if (!driverId || !['approved', 'rejected'].includes(status)) {
+    return res.status(400).json({ message: 'Valid driverId and status (approved/rejected) required' });
+  }
+
+  try {
+    // First check if driver exists
+    const existingDriver = await Driver.findOne({ driverId });
+    if (!existingDriver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    // Update the driver
+    const driver = await Driver.findOneAndUpdate(
+      { driverId },
+      { status },
+      { new: true }
+    );
+
+    // Try to create notification, but don't fail the whole operation if it fails
+    try {
+      const notification = new Notification({
+        userId: driver._id,
+        title: status === 'approved' ? 'Account Approved' : 'Account Rejected',
+        message: status === 'approved' 
+          ? 'Your driver account has been approved. You can now start accepting deliveries.'
+          : 'Your driver account has been rejected. Please contact support for more information.',
+        type: 'status_update'
+      });
+      await notification.save();
+    } catch (notificationErr) {
+      console.error('Failed to create notification:', notificationErr.message);
+      // Continue with success response even if notification fails
+    }
+
+    res.status(200).json({ 
+      message: `Driver ${status} successfully`,
+      driver: {
+        driverId: driver.driverId,
+        username: driver.username,
+        status: driver.status
+      }
+    });
+  } catch (err) {
+    console.error('Error updating driver status:', err.message);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Create new shipment
+const createShipment = async (req, res) => {
+  const { start, end, vehicleType, eta, notes } = req.body;
+  
+  if (!start || !end || !vehicleType || !eta) {
+    return res.status(400).json({ message: 'start, end, vehicleType, and eta are required' });
+  }
+
+  try {
+    const generateShipmentId = require('../utils/generateShipmentId');
+    const shipmentId = await generateShipmentId();
+    
+    const shipment = new Shipment({
+      shipmentId,
+      start,
+      end,
+      vehicleType,
+      eta: new Date(eta),
+      notes: notes || ''
+    });
+
+    await shipment.save();
+    res.status(201).json({ 
+      message: 'Shipment created successfully',
+      shipment
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ message: 'Shipment ID already exists' });
+    }
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Get all assigned shipments
+const getAssignedShipments = async (req, res) => {
+  try {
+    const shipments = await Shipment.find({ driver: { $ne: null } })
+      .populate('driver', 'username driverId vehicleType')
+      .sort({ createdAt: -1 });
+    res.status(200).json({ shipments });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Assign shipment to driver
+const assignShipmentToDriver = async (req, res) => {
+  const { shipmentId, driverId } = req.body;
+  
+  if (!shipmentId || !driverId) {
+    return res.status(400).json({ message: 'shipmentId and driverId are required' });
+  }
+
+  try {
+    const shipment = await Shipment.findOne({ shipmentId, status: 'Pending' });
+    if (!shipment) {
+      return res.status(404).json({ message: 'Pending shipment not found' });
+    }
+
+    console.log('Looking for driver with ID:', driverId);
+    const driver = await Driver.findOne({ 
+      driverId, 
+      status: 'approved'
+    });
+    console.log('Driver found:', driver);
+    
+    if (!driver) {
+      return res.status(404).json({ message: 'Approved driver not found' });
+    }
+
+    const updatedShipment = await Shipment.findOneAndUpdate(
+      { shipmentId },
+      { 
+        driver: driver._id, 
+        driverName: driver.username,
+        status: 'Shipping' 
+      },
+      { new: true }
+    ).populate('driver', 'username driverId vehicleType');
+
+    // Create notification for driver
+    const notification = new Notification({
+      userId: driver._id,
+      title: 'New Shipment Assigned',
+      message: `Shipment ID: ${shipmentId}\nFrom: ${shipment.start}\nTo: ${shipment.end}\nVehicle Type: ${shipment.vehicleType}\nETA: ${shipment.eta}\nNotes: ${shipment.notes || 'None'}`,
+      type: 'shipment_assigned'
+    });
+    await notification.save();
+
+    res.status(200).json({ 
+      message: 'Shipment assigned successfully',
+      shipment: updatedShipment
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Get all shipments
+const getAllShipments = async (req, res) => {
+  try {
+    const shipments = await Shipment.find()
+      .populate({
+        path: 'driver',
+        select: 'username driverId vehicleType',
+        options: { strictPopulate: false }
+      })
+      .sort({ createdAt: -1 });
+    
+    // Update driverName for shipments with assigned drivers
+    const updatedShipments = shipments.map(shipment => {
+      const shipmentObj = shipment.toObject();
+      if (shipmentObj.driver && shipmentObj.driver.username) {
+        shipmentObj.driverName = shipmentObj.driver.username;
+      }
+      return shipmentObj;
+    });
+    
+    res.status(200).json({ shipments: updatedShipments });
+  } catch (err) {
+    console.error('Error fetching shipments:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Update shipment details
+const updateShipment = async (req, res) => {
+  const { shipmentId, start, end, vehicleType, eta, notes } = req.body;
+  
+  if (!shipmentId) {
+    return res.status(400).json({ message: 'shipmentId is required' });
+  }
+
+  try {
+    const updateData = {};
+    if (start) updateData.start = start;
+    if (end) updateData.end = end;
+    if (vehicleType) updateData.vehicleType = vehicleType;
+    if (eta) updateData.eta = new Date(eta);
+    if (notes !== undefined) updateData.notes = notes;
+
+    const shipment = await Shipment.findOneAndUpdate(
+      { shipmentId },
+      updateData,
+      { new: true }
+    );
+
+    if (!shipment) {
+      return res.status(404).json({ message: 'Shipment not found' });
+    }
+
+    res.status(200).json({ 
+      message: 'Shipment updated successfully',
+      shipment
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+module.exports = {
+  getPendingDrivers,
+  getAcceptedDrivers,
+  updateDriverStatus,
+  createShipment,
+  assignShipmentToDriver,
+  getAssignedShipments,
+  getAllShipments,
+  getDriversByVehicleType,
+  updateShipment
+};

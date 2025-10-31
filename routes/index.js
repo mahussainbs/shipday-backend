@@ -19,6 +19,8 @@ const roleRoutes = require('./roleRoutes');
 const companyInfoRoutes = require('./companyInfoRoutes');
 const notificationRoutes = require('./notificationRoutes');
 const walletRoutes = require('./walletRoutes');
+const driverRoutes = require('./driver');
+const adminRoutes = require('./admin');
 
 
 router.use( authRoutes);
@@ -37,5 +39,7 @@ router.use('/roles', roleRoutes);
 router.use('/company-info', companyInfoRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/wallet', walletRoutes);
+router.use('/driver', driverRoutes);
+router.use('/admin', adminRoutes);
 
 module.exports = router;

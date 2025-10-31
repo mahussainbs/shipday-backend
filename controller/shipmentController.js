@@ -133,9 +133,23 @@ exports.getAllShipments = async (req, res) => {
   try {
     const shipments = await Shipment.find()
       .populate("orders")
+      .populate({
+        path: 'driver',
+        select: 'username driverId vehicleType',
+        options: { strictPopulate: false }
+      })
       .sort({ createdAt: -1 });
 
-    res.status(200).json(shipments);
+    // Update driverName for shipments with assigned drivers
+    const updatedShipments = shipments.map(shipment => {
+      const shipmentObj = shipment.toObject();
+      if (shipmentObj.driver && shipmentObj.driver.username) {
+        shipmentObj.driverName = shipmentObj.driver.username;
+      }
+      return shipmentObj;
+    });
+
+    res.status(200).json(updatedShipments);
   } catch (err) {
     console.error("❌ Error fetching shipments:", err.stack || err);
     res.status(500).json({ message: "Failed to fetch shipments" });
