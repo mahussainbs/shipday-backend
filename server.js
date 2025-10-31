@@ -10,7 +10,8 @@ const PORT = process.env.PORT || 5000;
  
 // ✅ Define allowed origins (only your frontend domains)
 const allowedOrigins = [
-  'http://localhost:5173',          // Dev (Vite default port)
+  'http://localhost:5173',   
+  'http://localhost:5000',       // Dev (Vite default port)
   'https://lemon-moss-0af8f730f.1.azurestaticapps.net', // Prod
   'https://swiftship.vercel.app'
 ];
@@ -28,7 +29,9 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
  
 // Import all routes from routes/index.js
