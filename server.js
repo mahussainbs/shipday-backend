@@ -12,10 +12,11 @@ const PORT = process.env.PORT || 5000;
 
 /** Allowlist: add only the real frontends */
 const ALLOWED_ORIGINS = [
-  'http://localhost:5173',
-  'http://localhost:5000',
+  
   'https://lemon-moss-0af8f730f.1.azurestaticapps.net',
   'https://swiftship.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:5000',
 ];
 
 /** Trust proxy (Azure/App Service sits behind a proxy) */
