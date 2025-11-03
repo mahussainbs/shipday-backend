@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { generateShipments,getAllShipments,updateOrderStatus,syncShipmentStatuses,getShipmentCount,getShipmentMetrics,getShipmentStatusBreakdown } = require('../controller/shipmentController');
+const { createShipment, getShipmentById } = require('../controller/adminController');
 
+router.post('/', createShipment); // ✅ Main POST route for creating individual shipments
+router.get('/:shipmentId', getShipmentById); // ✅ Get shipment by ID
 router.post('/generate', generateShipments);
 router.get('/', getAllShipments); 
 router.post("/update-order-status",updateOrderStatus);

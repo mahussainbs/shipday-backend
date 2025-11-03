@@ -2,13 +2,19 @@ const mongoose = require('mongoose');
 
 const shipmentSchema = new mongoose.Schema({
   shipmentId: { type: String, required: true, unique: true },
+  senderName: { type: String, required: true },
+  senderPhone: { type: String, required: true },
+  receiverName: { type: String, required: true },
+  receiverPhone: { type: String, required: true },
   start: { type: String, required: true },
   end: { type: String, required: true },
-  vehicleType: { 
-    type: String, 
-    required: true,
-    enum: ['bike', 'car', 'van', 'truck']
+  parcelWeight: { type: Number, required: true },
+  packageType: {
+    type: String,
+    enum: ['document', 'parcel', 'envelope','fragile', 'electronics', 'clothing', 'food','other'],
+    required: true
   },
+  cost: { type: Number, required: true },
   eta: { type: Date, required: true },
   notes: { type: String, default: '' },
   status: { 

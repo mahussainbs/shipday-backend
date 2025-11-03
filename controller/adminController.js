@@ -1,6 +1,7 @@
 const Driver = require('../models/Driver');
 const Notification = require('../models/Notification');
 const Shipment = require('../models/Shipment');
+const Order = require('../models/Order');
 
 // Get drivers by vehicle type
 const getDriversByVehicleType = async (req, res) => {
@@ -91,10 +92,10 @@ const updateDriverStatus = async (req, res) => {
 
 // Create new shipment
 const createShipment = async (req, res) => {
-  const { start, end, vehicleType, eta, notes } = req.body;
+  const { senderName, senderPhone, receiverName, receiverPhone, start, end, parcelWeight, packageType, cost, eta, notes } = req.body;
   
-  if (!start || !end || !vehicleType || !eta) {
-    return res.status(400).json({ message: 'start, end, vehicleType, and eta are required' });
+  if (!senderName || !senderPhone || !receiverName || !receiverPhone || !start || !end || !parcelWeight || !packageType || !cost || !eta) {
+    return res.status(400).json({ message: 'senderName, senderPhone, receiverName, receiverPhone, start, end, parcelWeight, packageType, cost, and eta are required' });
   }
 
   try {
@@ -103,9 +104,15 @@ const createShipment = async (req, res) => {
     
     const shipment = new Shipment({
       shipmentId,
+      senderName,
+      senderPhone,
+      receiverName,
+      receiverPhone,
       start,
       end,
-      vehicleType,
+      parcelWeight,
+      packageType,
+      cost,
       eta: new Date(eta),
       notes: notes || ''
     });
@@ -127,7 +134,7 @@ const createShipment = async (req, res) => {
 const getAssignedShipments = async (req, res) => {
   try {
     const shipments = await Shipment.find({ driver: { $ne: null } })
-      .populate('driver', 'username driverId vehicleType')
+      .populate('driver', 'username driverId')
       .sort({ createdAt: -1 });
     res.status(200).json({ shipments });
   } catch (err) {
@@ -168,13 +175,13 @@ const assignShipmentToDriver = async (req, res) => {
         status: 'Shipping' 
       },
       { new: true }
-    ).populate('driver', 'username driverId vehicleType');
+    ).populate('driver', 'username driverId');
 
     // Create notification for driver
     const notification = new Notification({
       userId: driver._id,
       title: 'New Shipment Assigned',
-      message: `Shipment ID: ${shipmentId}\nFrom: ${shipment.start}\nTo: ${shipment.end}\nVehicle Type: ${shipment.vehicleType}\nETA: ${shipment.eta}\nNotes: ${shipment.notes || 'None'}`,
+      message: `Shipment ID: ${shipmentId}\nFrom: ${shipment.start}\nTo: ${shipment.end}\nPackage: ${shipment.packageType}\nWeight: ${shipment.parcelWeight}kg\nETA: ${shipment.eta}\nNotes: ${shipment.notes || 'None'}`,
       type: 'shipment_assigned'
     });
     await notification.save();
@@ -188,13 +195,52 @@ const assignShipmentToDriver = async (req, res) => {
   }
 };
 
+// Get order details by ID
+const getOrderDetails = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findOne({ orderId });
+    
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    
+    res.status(200).json({ order });
+  } catch (err) {
+    console.error('Error fetching order details:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Get shipment by ID
+const getShipmentById = async (req, res) => {
+  try {
+    const { shipmentId } = req.params;
+    const shipment = await Shipment.findOne({ shipmentId })
+      .populate({
+        path: 'driver',
+        select: 'username driverId',
+        options: { strictPopulate: false }
+      });
+    
+    if (!shipment) {
+      return res.status(404).json({ message: 'Shipment not found' });
+    }
+    
+    res.status(200).json({ shipment });
+  } catch (err) {
+    console.error('Error fetching shipment:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 // Get all shipments
 const getAllShipments = async (req, res) => {
   try {
     const shipments = await Shipment.find()
       .populate({
         path: 'driver',
-        select: 'username driverId vehicleType',
+        select: 'username driverId',
         options: { strictPopulate: false }
       })
       .sort({ createdAt: -1 });
@@ -217,7 +263,7 @@ const getAllShipments = async (req, res) => {
 
 // Update shipment details
 const updateShipment = async (req, res) => {
-  const { shipmentId, start, end, vehicleType, eta, notes } = req.body;
+  const { shipmentId, senderName, senderPhone, receiverName, receiverPhone, start, end, parcelWeight, packageType, cost, eta, notes } = req.body;
   
   if (!shipmentId) {
     return res.status(400).json({ message: 'shipmentId is required' });
@@ -225,9 +271,15 @@ const updateShipment = async (req, res) => {
 
   try {
     const updateData = {};
+    if (senderName) updateData.senderName = senderName;
+    if (senderPhone) updateData.senderPhone = senderPhone;
+    if (receiverName) updateData.receiverName = receiverName;
+    if (receiverPhone) updateData.receiverPhone = receiverPhone;
     if (start) updateData.start = start;
     if (end) updateData.end = end;
-    if (vehicleType) updateData.vehicleType = vehicleType;
+    if (parcelWeight) updateData.parcelWeight = parcelWeight;
+    if (packageType) updateData.packageType = packageType;
+    if (cost) updateData.cost = cost;
     if (eta) updateData.eta = new Date(eta);
     if (notes !== undefined) updateData.notes = notes;
 
@@ -250,14 +302,40 @@ const updateShipment = async (req, res) => {
   }
 };
 
+// Delete shipment
+const deleteShipment = async (req, res) => {
+  const { shipmentId } = req.params;
+  
+  if (!shipmentId) {
+    return res.status(400).json({ message: 'shipmentId is required' });
+  }
+
+  try {
+    const shipment = await Shipment.findOneAndDelete({ shipmentId });
+
+    if (!shipment) {
+      return res.status(404).json({ message: 'Shipment not found' });
+    }
+
+    res.status(200).json({ 
+      message: 'Shipment deleted successfully'
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 module.exports = {
   getPendingDrivers,
   getAcceptedDrivers,
   updateDriverStatus,
   createShipment,
+  getOrderDetails,
+  getShipmentById,
   assignShipmentToDriver,
   getAssignedShipments,
   getAllShipments,
   getDriversByVehicleType,
-  updateShipment
+  updateShipment,
+  deleteShipment
 };

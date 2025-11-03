@@ -5,6 +5,8 @@ const {
   getAcceptedDrivers,
   updateDriverStatus,
   createShipment,
+  getOrderDetails,
+  getShipmentById,
   assignShipmentToDriver,
   getAssignedShipments,
   getAllShipments,
@@ -23,6 +25,12 @@ router.put('/drivers/status', updateDriverStatus);
 
 // Create shipment
 router.post('/create-shipment', createShipment);
+
+// Get order details by ID
+router.get('/order/:orderId', getOrderDetails);
+
+// Get shipment by ID
+router.get('/shipment/:shipmentId', getShipmentById);
 
 // Assign shipment to driver
 router.post('/assign-shipment', assignShipmentToDriver);

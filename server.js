@@ -11,7 +11,9 @@ const PORT = process.env.PORT || 5000;
 // ✅ Define allowed origins (only your frontend domains)
 const allowedOrigins = [
   'http://localhost:5173',          // Dev (Vite default port)
-  'https://lemon-moss-0af8f730f.1.azurestaticapps.net' // Prod
+  'https://lemon-moss-0af8f730f.1.azurestaticapps.net',
+   'http://192.168.0.54:8081',       // ✅ ADD THIS - Your mobile app
+  'http://192.168.0.54:5000',
 ];
  
 // Middleware

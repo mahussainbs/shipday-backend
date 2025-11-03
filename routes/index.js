@@ -33,7 +33,7 @@ router.use("/transactions", transactionRoutes);
 router.use( orderRoutes);
 router.use("/fleet", fleetRoutes);
 router.use("/trackings", trackingRoutes);
-router.use('/shipment', shipmentRoutes);
+router.use('/shipments', shipmentRoutes);
 router.use("/deliveries", deliveryRoutes);
 router.use('/roles', roleRoutes);
 router.use('/company-info', companyInfoRoutes);

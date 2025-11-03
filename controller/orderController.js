@@ -103,8 +103,16 @@ exports.getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
-    res.json({ order });
+    
+    // Ensure cost field exists
+    const orderData = {
+      ...order.toObject(),
+      cost: order.cost || 0
+    };
+    
+    res.json({ order: orderData });
   } catch (err) {
+    console.error('Error fetching order:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -122,8 +130,15 @@ exports.deleteOrderById = async (req, res) => {
 };
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 }); // Optional: sort newest first
-    res.json({ orders });
+    const orders = await Order.find().sort({ createdAt: -1 });
+    
+    // Ensure all orders have cost field
+    const ordersWithCost = orders.map(order => ({
+      ...order.toObject(),
+      cost: order.cost || 0
+    }));
+    
+    res.json({ orders: ordersWithCost });
   } catch (err) {
     console.error('Error fetching orders:', err);
     res.status(500).json({ message: 'Server error' });
