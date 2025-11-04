@@ -3,48 +3,30 @@ const router = express.Router();
 const {
   getPendingDrivers,
   getAcceptedDrivers,
+  getAllDrivers,
   updateDriverStatus,
   createShipment,
-  getOrderDetails,
-  getShipmentById,
   assignShipmentToDriver,
-  getAssignedShipments,
   getAllShipments,
+  getShipmentById,
   getDriversByVehicleType,
-  updateShipment
+  updateShipment,
+  deleteShipment
 } = require('../controller/adminController');
 
-// Get pending drivers
+// Driver routes
+router.get('/drivers/all', getAllDrivers);
 router.get('/drivers/pending', getPendingDrivers);
-
-// Get accepted drivers
-router.get('/drivers/accepted', getAcceptedDrivers);
-
-// Approve/Reject driver
-router.put('/drivers/status', updateDriverStatus);
-
-// Create shipment
-router.post('/create-shipment', createShipment);
-
-// Get order details by ID
-router.get('/order/:orderId', getOrderDetails);
-
-// Get shipment by ID
-router.get('/shipment/:shipmentId', getShipmentById);
-
-// Assign shipment to driver
-router.post('/assign-shipment', assignShipmentToDriver);
-
-// Get all assigned shipments
-router.get('/assigned-shipments', getAssignedShipments);
-
-// Get all shipments
-router.get('/shipments', getAllShipments);
-
-// Get drivers by vehicle type (put this after other specific routes)
+router.get('/drivers/approved', getAcceptedDrivers);
 router.get('/drivers/:vehicleType', getDriversByVehicleType);
+router.patch('/drivers/status', updateDriverStatus);
 
-// Update shipment details
-router.put('/update-shipment', updateShipment);
+// Shipment routes
+router.get('/shipments', getAllShipments);
+router.get('/shipments/:shipmentId', getShipmentById);
+router.post('/shipments', createShipment);
+router.patch('/shipments/:shipmentId', updateShipment);
+router.delete('/shipments/:shipmentId', deleteShipment);
+router.post('/shipments/assign', assignShipmentToDriver);
 
 module.exports = router;

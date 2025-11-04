@@ -1,51 +1,26 @@
 const express = require('express');
-const http = require('http');          
-const socketIo = require('socket.io');
+const http = require('http');
 const mongoose = require('mongoose');
-const cors = require('cors');
 require('dotenv').config();
- 
+
+const corsMiddleware = require('./config/cors');
+const { initializeSocket } = require('./config/socket');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
- 
-// ✅ Define allowed origins (only your frontend domains)
-const allowedOrigins = [
-  'http://localhost:5173',          // Dev (Vite default port)
-  'https://lemon-moss-0af8f730f.1.azurestaticapps.net',
-   'http://192.168.0.54:8081',       // ✅ ADD THIS - Your mobile app
-  'http://192.168.0.54:5000',
-];
- 
+
 // Middleware
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
- 
-// ✅ Secure CORS config
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  
-}));
- 
-// Import all routes from routes/index.js
+app.use(corsMiddleware);
+
+// Import routes
 const routes = require('./routes');
- 
+
 // Socket setup
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"]
-  },
-  transports: ["websocket"],
-});
- 
+const io = initializeSocket(server);
+
 // Make io accessible
 app.set('io', io);
  

@@ -3,7 +3,6 @@ const Notification = require('../models/Notification');
 const Shipment = require('../models/Shipment');
 const Order = require('../models/Order');
 
-// Get drivers by vehicle type
 const getDriversByVehicleType = async (req, res) => {
   const { vehicleType } = req.params;
   try {
@@ -17,7 +16,6 @@ const getDriversByVehicleType = async (req, res) => {
   }
 };
 
-// Get all pending drivers
 const getPendingDrivers = async (req, res) => {
   try {
     const drivers = await Driver.find({ status: 'pending' }).select('-password');
@@ -27,53 +25,43 @@ const getPendingDrivers = async (req, res) => {
   }
 };
 
-// Get all accepted drivers
 const getAcceptedDrivers = async (req, res) => {
   try {
-    console.log('Fetching approved drivers...');
     const drivers = await Driver.find({ status: 'approved' }).select('-password');
-    console.log('Found approved drivers:', drivers.length);
     res.status(200).json({ drivers });
   } catch (err) {
-    console.error('Error fetching approved drivers:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Get all drivers
 const getAllDrivers = async (req, res) => {
   try {
-    const drivers = await Driver.find().select('-password');
+    const drivers = await Driver.find({}).select('-password');
     res.status(200).json({ drivers });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Approve/Reject driver
 const updateDriverStatus = async (req, res) => {
   const { driverId, status } = req.body;
-  console.log('Received:', { driverId, status });
   
   if (!driverId || !['approved', 'rejected'].includes(status)) {
     return res.status(400).json({ message: 'Valid driverId and status (approved/rejected) required' });
   }
 
   try {
-    // First check if driver exists
     const existingDriver = await Driver.findOne({ driverId });
     if (!existingDriver) {
       return res.status(404).json({ message: 'Driver not found' });
     }
 
-    // Update the driver
     const driver = await Driver.findOneAndUpdate(
       { driverId },
       { status },
       { new: true }
     );
 
-    // Try to create notification, but don't fail the whole operation if it fails
     try {
       const notification = new Notification({
         userId: driver._id,
@@ -86,7 +74,6 @@ const updateDriverStatus = async (req, res) => {
       await notification.save();
     } catch (notificationErr) {
       console.error('Failed to create notification:', notificationErr.message);
-      // Continue with success response even if notification fails
     }
 
     res.status(200).json({ 
@@ -98,12 +85,10 @@ const updateDriverStatus = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Error updating driver status:', err.message);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// Create new shipment
 const createShipment = async (req, res) => {
   const { senderName, senderPhone, receiverName, receiverPhone, start, end, parcelWeight, packageType, cost, eta, notes } = req.body;
   
@@ -143,19 +128,6 @@ const createShipment = async (req, res) => {
   }
 };
 
-// Get all assigned shipments
-const getAssignedShipments = async (req, res) => {
-  try {
-    const shipments = await Shipment.find({ driver: { $ne: null } })
-      .populate('driver', 'username driverId')
-      .sort({ createdAt: -1 });
-    res.status(200).json({ shipments });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-// Assign shipment to driver
 const assignShipmentToDriver = async (req, res) => {
   const { shipmentId, driverId } = req.body;
   
@@ -169,12 +141,10 @@ const assignShipmentToDriver = async (req, res) => {
       return res.status(404).json({ message: 'Pending shipment not found' });
     }
 
-    console.log('Looking for driver with ID:', driverId);
     const driver = await Driver.findOne({ 
       driverId, 
       status: 'approved'
     });
-    console.log('Driver found:', driver);
     
     if (!driver) {
       return res.status(404).json({ message: 'Approved driver not found' });
@@ -190,7 +160,6 @@ const assignShipmentToDriver = async (req, res) => {
       { new: true }
     ).populate('driver', 'username driverId');
 
-    // Create notification for driver
     const notification = new Notification({
       userId: driver._id,
       title: 'New Shipment Assigned',
@@ -208,24 +177,30 @@ const assignShipmentToDriver = async (req, res) => {
   }
 };
 
-// Get order details by ID
-const getOrderDetails = async (req, res) => {
+const getAllShipments = async (req, res) => {
   try {
-    const { orderId } = req.params;
-    const order = await Order.findOne({ orderId });
+    const shipments = await Shipment.find()
+      .populate({
+        path: 'driver',
+        select: 'username driverId',
+        options: { strictPopulate: false }
+      })
+      .sort({ createdAt: -1 });
     
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
+    const updatedShipments = shipments.map(shipment => {
+      const shipmentObj = shipment.toObject();
+      if (shipmentObj.driver && shipmentObj.driver.username) {
+        shipmentObj.driverName = shipmentObj.driver.username;
+      }
+      return shipmentObj;
+    });
     
-    res.status(200).json({ order });
+    res.status(200).json({ shipments: updatedShipments });
   } catch (err) {
-    console.error('Error fetching order details:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// Get shipment by ID
 const getShipmentById = async (req, res) => {
   try {
     const { shipmentId } = req.params;
@@ -242,41 +217,12 @@ const getShipmentById = async (req, res) => {
     
     res.status(200).json({ shipment });
   } catch (err) {
-    console.error('Error fetching shipment:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// Get all shipments
-const getAllShipments = async (req, res) => {
-  try {
-    const shipments = await Shipment.find()
-      .populate({
-        path: 'driver',
-        select: 'username driverId',
-        options: { strictPopulate: false }
-      })
-      .sort({ createdAt: -1 });
-    
-    // Update driverName for shipments with assigned drivers
-    const updatedShipments = shipments.map(shipment => {
-      const shipmentObj = shipment.toObject();
-      if (shipmentObj.driver && shipmentObj.driver.username) {
-        shipmentObj.driverName = shipmentObj.driver.username;
-      }
-      return shipmentObj;
-    });
-    
-    res.status(200).json({ shipments: updatedShipments });
-  } catch (err) {
-    console.error('Error fetching shipments:', err);
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
-
-// Update shipment details
 const updateShipment = async (req, res) => {
-  const { shipmentId, senderName, senderPhone, receiverName, receiverPhone, start, end, parcelWeight, packageType, cost, eta, notes } = req.body;
+  const { shipmentId } = req.params;
   
   if (!shipmentId) {
     return res.status(400).json({ message: 'shipmentId is required' });
@@ -284,17 +230,11 @@ const updateShipment = async (req, res) => {
 
   try {
     const updateData = {};
-    if (senderName) updateData.senderName = senderName;
-    if (senderPhone) updateData.senderPhone = senderPhone;
-    if (receiverName) updateData.receiverName = receiverName;
-    if (receiverPhone) updateData.receiverPhone = receiverPhone;
-    if (start) updateData.start = start;
-    if (end) updateData.end = end;
-    if (parcelWeight) updateData.parcelWeight = parcelWeight;
-    if (packageType) updateData.packageType = packageType;
-    if (cost) updateData.cost = cost;
-    if (eta) updateData.eta = new Date(eta);
-    if (notes !== undefined) updateData.notes = notes;
+    Object.keys(req.body).forEach(key => {
+      if (req.body[key] !== undefined) {
+        updateData[key] = key === 'eta' ? new Date(req.body[key]) : req.body[key];
+      }
+    });
 
     const shipment = await Shipment.findOneAndUpdate(
       { shipmentId },
@@ -315,14 +255,9 @@ const updateShipment = async (req, res) => {
   }
 };
 
-// Delete shipment
 const deleteShipment = async (req, res) => {
   const { shipmentId } = req.params;
   
-  if (!shipmentId) {
-    return res.status(400).json({ message: 'shipmentId is required' });
-  }
-
   try {
     const shipment = await Shipment.findOneAndDelete({ shipmentId });
 
@@ -344,11 +279,9 @@ module.exports = {
   getAllDrivers,
   updateDriverStatus,
   createShipment,
-  getOrderDetails,
-  getShipmentById,
   assignShipmentToDriver,
-  getAssignedShipments,
   getAllShipments,
+  getShipmentById,
   getDriversByVehicleType,
   updateShipment,
   deleteShipment

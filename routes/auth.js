@@ -8,35 +8,27 @@ const {
   resetPassword,
   verifyCode,
   updateUserProfile,
-  saveUserLocation,
   getUserByEmail,
-  getAllCustomers,
-  getCustomerById, 
-  googleLogin, 
-  createNotification, // ✅ Added createNotification
-} = require('../controller/authcontroller');
+  getAllCustomers
+} = require('../controllers/auth');
 
-const authMiddleware = require('../middleware/authMiddleware'); // ✅ Consistent naming
+const authMiddleware = require('../middleware/authMiddleware');
 
-router.post('/request-code', requestVerificationCode);
+// Authentication routes
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/logout', authMiddleware, logoutUser);
 router.post('/reset-password', resetPassword);
-router.post('/verify-code', verifyCode);
-router.post('/profile/save', updateUserProfile);
-router.post('/profile/location', saveUserLocation);
-router.get('/user', authMiddleware, getUserByEmail); // ✅ Now correct
-router.post('/api/profile/save', updateUserProfile);
+
+// Verification routes
+router.post('/verification/request', requestVerificationCode);
+router.post('/verification/verify', verifyCode);
+
+// User profile routes
+router.get('/profile', authMiddleware, getUserByEmail);
+router.patch('/profile', updateUserProfile);
+
+// Customer routes
 router.get('/customers', getAllCustomers);
-router.get('/customers/:id', getCustomerById);
-router.post('/google-login', googleLogin);
-router.post('/notification', createNotification); // ✅ Added route for creating notifications
-
-
-
-router.get('/dashboard', authMiddleware, (req, res) => {
-  res.status(200).json({ message: "This is a protected route", user: req.user });
-});
 
 module.exports = router;
