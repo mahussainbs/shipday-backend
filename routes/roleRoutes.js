@@ -7,10 +7,10 @@ router.post('/', roleController.createRole);
 
 // GET all roles
 router.get('/', roleController.getRoles);
-// ✅ PUT update role
+// PUT update role
 router.put('/:id', roleController.updateRole);
 
-// ✅ DELETE role
+//  DELETE role
 router.delete('/:id', roleController.deleteRole);
 
 

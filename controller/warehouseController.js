@@ -12,7 +12,7 @@ const generateWarehouseId = async () => {
   return `WH-${number.toString().padStart(3, "0")}`;
 };
 
-// ✅ Add new warehouse with lat/lon
+//  Add new warehouse with lat/lon
 exports.addWarehouse = async (req, res) => {
   try {
     const { location } = req.body;
@@ -44,7 +44,7 @@ exports.addWarehouse = async (req, res) => {
   }
 };
 
-// ✅ Get all warehouses
+//  Get all warehouses
 exports.getAllWarehouses = async (req, res) => {
   try {
     const warehouses = await Warehouse.find().sort({ createdAt: -1 });
@@ -54,7 +54,7 @@ exports.getAllWarehouses = async (req, res) => {
   }
 };
 
-// ✅ Delete warehouse
+//  Delete warehouse
 exports.deleteWarehouse = async (req, res) => {
   try {
     const { id } = req.params;
@@ -68,7 +68,7 @@ exports.deleteWarehouse = async (req, res) => {
   }
 };
 
-// ✅ Update warehouse
+// Update warehouse
 exports.updateWarehouse = async (req, res) => {
   try {
     const { id } = req.params;

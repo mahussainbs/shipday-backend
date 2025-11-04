@@ -32,7 +32,7 @@ exports.assignStaff = async (req, res) => {
   const { staffId, fullName, role, shift, attendance, warehouseId , warehouseName} = req.body;
 
   try {
-    // ✅ Check if staff is already assigned to *any* warehouse
+    //  Check if staff is already assigned to *any* warehouse
     const exists = await WarehouseStaff.findOne({ staffId });
 
     if (exists) {

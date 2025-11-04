@@ -175,7 +175,7 @@ const registerUser = async (req, res) => {
   }
 };
  
-// ✅ Login user
+// Login user
 const loginUser = async (req, res) => {
     console.log("Loged in");
  
@@ -199,7 +199,7 @@ const loginUser = async (req, res) => {
     // create Token document
     const tokenDoc = await Token.create({ userId: user._id, token });
    
-    // ✅ Set expiresAt relative to createdAt
+    //  Set expiresAt relative to createdAt
     tokenDoc.expiresAt = new Date(tokenDoc.createdAt.getTime() + 1 * 60 * 1000); // 1 min
     await tokenDoc.save();
  
@@ -216,7 +216,7 @@ const loginUser = async (req, res) => {
   }
 };
  
-// ✅ Logout user
+//  Logout user
 const logoutUser = async (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Token missing" });
@@ -230,7 +230,7 @@ const logoutUser = async (req, res) => {
   }
 };
  
-// ✅ Reset password
+//  Reset password
 const resetPassword = async (req, res) => {
   const { email, newPassword } = req.body;
   const sanitizedEmail = validateEmail(email);
@@ -270,7 +270,7 @@ const resetPassword = async (req, res) => {
   }
 };
  
-// ✅ Update user profile
+//  Update user profile
 const updateUserProfile = async (req, res) => {
   const { email, fullName, nickName, dob, phone, gender, image } = req.body;
   const sanitizedEmail = validateEmail(email);
@@ -302,7 +302,7 @@ const updateUserProfile = async (req, res) => {
   }
 };
  
-// ✅ Save user location
+// Save user location
 const saveUserLocation = async (req, res) => {
   const { place } = req.body;
   if (!place) return res.status(400).json({ message: 'Place is required' });
@@ -340,7 +340,7 @@ const saveUserLocation = async (req, res) => {
   }
 };
  
-// ✅ Get user by email
+//  Get user by email
 const getUserByEmail = async (req, res) => {
   const sanitizedEmail = validateEmail(req.query.email);
   if (!sanitizedEmail) return res.status(400).json({ message: 'Valid email is required' });
@@ -356,7 +356,7 @@ const getUserByEmail = async (req, res) => {
   }
 };
  
-// ✅ Get all customers
+//  Get all customers
 const getAllCustomers = async (req, res) => {
   try {
     const users = await User.find();
@@ -384,7 +384,7 @@ const getAllCustomers = async (req, res) => {
   }
 };
  
-// ✅ Get single customer by ID
+//  Get single customer by ID
 const getCustomerById = async (req, res) => {
   const id = validateCustomerId(req.params.id);
   if (!id) return res.status(400).json({ message: "Invalid customer ID format" });
@@ -415,7 +415,7 @@ const getCustomerById = async (req, res) => {
   }
 };
  
-// ✅ Google Login
+// Google Login
 const googleLogin = async (req, res) => {
   const { email, fullName, image } = req.body;
   const sanitizedEmail = validateEmail(email);
@@ -449,7 +449,7 @@ const googleLogin = async (req, res) => {
       { expiresIn: "1m" }
     );
  
-    // ✅ create Token with expiresAt relative to createdAt
+    //  create Token with expiresAt relative to createdAt
     const tokenDoc = await Token.create({ userId: user._id, token });
     tokenDoc.expiresAt = new Date(tokenDoc.createdAt.getTime() + 1 * 60 * 1000); // 1 min
     await tokenDoc.save();
@@ -484,7 +484,7 @@ const convertImageToBase64 = async (url) => {
   }
 };
  
-// ✅ Export all
+//  Export all
 module.exports = {
   requestVerificationCode,
   verifyCode,

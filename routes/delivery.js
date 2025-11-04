@@ -7,7 +7,7 @@ router.get("/", deliveryController.getAllDeliveries);
 router.get("/driver", deliveryController.getDriverByShipment);
 router.get("/stats", deliveryController.getPendingDeliveryStats);
 router.get("/delivered-stats", deliveryController.getDeliveredStats);
-router.get("/chart-stats", deliveryController.getChartStats); // ✅ Add this line
+router.get("/chart-stats", deliveryController.getChartStats); //  Add this line
 router.post("/auto-create", deliveryController.triggerAutoCreateDeliveries);
 
 

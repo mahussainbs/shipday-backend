@@ -6,7 +6,7 @@ const {
   updateOrderStatus,
   getShipmentMetrics,
   getShipmentStatusBreakdown
-} = require('../controllers/shipments');
+} = require('../controller/shipmentController');
 const { createShipment, getShipmentById, updateShipment } = require('../controller/adminController');
 
 // Shipment routes

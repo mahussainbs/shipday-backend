@@ -47,7 +47,7 @@ exports.createTracking = async (req, res) => {
       console.warn("Start warehouse not found:", req.body.start);
     }
 
-    // ✅ Create and save new tracking
+    // Create and save new tracking
     const newTracking = new Tracking({
       ...req.body,
       routeId,

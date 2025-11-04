@@ -22,7 +22,7 @@ exports.generateShipments = async (req, res) => {
     const assignedOrderIds = new Set(); // Track assigned orders
     const shipments = [];
 
-    // ✅ Fetch all existing shipment orders once
+    //  Fetch all existing shipment orders once
     const existingShipmentOrders = new Set(
       (await Shipment.find({}, "orders")).flatMap(s =>
         s.orders.map(id => id.toString())
@@ -74,7 +74,7 @@ exports.generateShipments = async (req, res) => {
         return distance <= 50;
       });
 
-      console.log(`✅ Route ${routeId} matched ${matchingOrders.length} unassigned orders.`);
+      console.log(` Route ${routeId} matched ${matchingOrders.length} unassigned orders.`);
 
       if (matchingOrders.length === 0) continue;
 
@@ -114,7 +114,7 @@ exports.generateShipments = async (req, res) => {
         });
 
         await shipment.save();
-        console.log(`✅ Created new shipment ${shipment.shipmentId}`);
+        console.log(` Created new shipment ${shipment.shipmentId}`);
       }
 
       shipments.push(shipment);
@@ -197,7 +197,7 @@ exports.syncShipmentStatuses = async (req, res) => {
       if (allDelivered && shipment.status !== "Delivered") {
         shipment.status = "Delivered";
         await shipment.save();
-        console.log(`✅ Synced status for shipment ${shipment.shipmentId}`);
+        console.log(`Synced status for shipment ${shipment.shipmentId}`);
       }
     }
 
@@ -282,4 +282,13 @@ exports.getShipmentStatusBreakdown = async (req, res) => {
   }
 };
 
+module.exports = {
+  generateShipments: exports.generateShipments,
+  getAllShipments: exports.getAllShipments,
+  updateOrderStatus: exports.updateOrderStatus,
+  syncShipmentStatuses: exports.syncShipmentStatuses,
+  getShipmentCount: exports.getShipmentCount,
+  getShipmentMetrics: exports.getShipmentMetrics,
+  getShipmentStatusBreakdown: exports.getShipmentStatusBreakdown
+};
 

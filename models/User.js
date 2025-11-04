@@ -18,10 +18,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-      tokens: [{ type: String }], // ✅ Multi-device support
+      tokens: [{ type: String }], //  Multi-device support
 
 
-    // ✅ Add these profile fields:
+    // Add these profile fields:
     fullName: String,
     nickName: String,
     dob: String,

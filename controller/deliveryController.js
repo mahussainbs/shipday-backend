@@ -162,7 +162,7 @@ exports.autoCreateDeliveries = async () => {
       console.log(`✔️ Created delivery for shipment ${shipment.shipmentId}`);
     }
 
-    console.log("✅ Auto delivery creation complete.");
+    console.log(" Auto delivery creation complete.");
   } catch (err) {
     console.error("❌ Error in autoCreateDeliveries:", err.message);
   }

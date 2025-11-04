@@ -1,7 +1,7 @@
 const Order = require('../models/Order');
 const User = require('../models/User'); // Add if not already imported
 const getCoordinates = require('../utils/getCoordinates');
-const Notification = require('../models/Notification'); // ✅ Import Notification model
+const Notification = require('../models/Notification'); //  Import Notification model
 const Shipment = require("../models/Shipment");
 
 
@@ -81,7 +81,7 @@ exports.createOrder = async (req, res) => {
 
     await order.save();
 
-    // ✅ Store notification in DB with userId
+    // Store notification in DB with userId
     await Notification.create({
       userId: user ? user._id : null, // if user is found, store their _id
       title: 'New Order Created',

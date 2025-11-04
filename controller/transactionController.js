@@ -25,7 +25,7 @@ exports.createTransaction = async (req, res) => {
       amount,
       method,
       status,
-      orderId, // ✅ include orderId here
+      orderId, //  include orderId here
     });
 
     await newTransaction.save();

@@ -1,7 +1,7 @@
 // utils/mail.js
 const nodemailer = require("nodemailer");
 
-// ✅ Nodemailer transporter setup
+// Nodemailer transporter setup
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   auth: {
@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// ✅ Send mail function
+// Send mail function
 const sendMail = async (to, subject, text, html = null) => {
   try {
     const mailOptions = {
@@ -22,7 +22,7 @@ const sendMail = async (to, subject, text, html = null) => {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Email sent to ${to}`);
+    console.log(` Email sent to ${to}`);
   } catch (error) {
     console.error("❌ Email sending failed:", error);
     throw new Error("Email could not be sent");

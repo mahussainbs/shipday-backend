@@ -35,7 +35,7 @@ const shipmentSchema = new mongoose.Schema({
   driverName: { type: String, default: "Unassigned" }
 },
 {
-  timestamps: true  // ✅ Enables createdAt and updatedAt automatically
+  timestamps: true  //  Enables createdAt and updatedAt automatically
 });
 
 module.exports = mongoose.model('Shipment', shipmentSchema);
