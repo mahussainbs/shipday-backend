@@ -23,7 +23,7 @@ exports.createTracking = async (req, res) => {
     const routeId = `RET${padNumber(nextNumber, 3)}`;
     const trackingId = `TRK${padNumber(nextNumber, 4)}`;
 
-    // 🌍 Get coordinates for end address using LocationIQ
+    //  Get coordinates for end address using LocationIQ
     const receiverAddress = req.body.end;
     console.log("Received address (end):", receiverAddress);
 
@@ -35,7 +35,7 @@ exports.createTracking = async (req, res) => {
       }
     }
 
-    // 🏭 Get coordinates for start warehouse from DB
+    //  Get coordinates for start warehouse from DB
     const startWarehouse = await Warehouse.findOne({ name: req.body.start });
     let startLatitude = null;
     let startLongitude = null;

@@ -12,14 +12,14 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 // Password strength regex
 const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
  
-// 🔒 Email validator
+//  Email validator
 const validateEmail = (email) => {
   const sanitized = String(email).toLowerCase().trim();
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(sanitized) ? sanitized : null;
 };
  
-// 🔒 Customer ID validator
+//  Customer ID validator
 const validateCustomerId = (id) => {
   return /^CUST\d{3,}$/.test(id) ? id : null;
 };

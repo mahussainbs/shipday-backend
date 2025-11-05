@@ -1,7 +1,7 @@
 const Wallet = require('../models/Wallet');
 const mongoose = require('mongoose');
 
-// 📌 Get wallet data
+//  Get wallet data
 exports.getWallet = async (req, res) => {
   try {
     const wallet = await Wallet.findOne({ userId: req.params.userId });
@@ -12,7 +12,7 @@ exports.getWallet = async (req, res) => {
   }
 };
 
-// 📌 Add transaction and update balance
+//  Add transaction and update balance
 exports.addTransaction = async (req, res) => {
   try {
     const { userId, type, amount, description } = req.body;
