@@ -12,7 +12,7 @@ const {
   getDriversByVehicleType,
   updateShipment,
   deleteShipment
-} = require('../controller/adminController');
+} = require('../controller/admin');
 
 // Driver routes
 router.get('/drivers/all', getAllDrivers);

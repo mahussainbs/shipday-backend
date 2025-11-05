@@ -14,7 +14,7 @@ const {
   getDriverByRoute,
    getDriverByName,
    
-} = require("../controller/staffController");
+} = require("../controller/staff");
 
 
 router.post("/add", addNewStaff);

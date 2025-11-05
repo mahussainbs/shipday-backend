@@ -7,7 +7,7 @@ const {
   getDriverNotifications,
   getDriverShipments,
   updateShipmentStatus,
-} = require('../controller/driverController');
+} = require('../controller/driver');
 const upload = require('../middleware/upload');
 
 // Driver registration (collect details and send OTP)

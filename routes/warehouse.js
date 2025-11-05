@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const warehouseController = require("../controller/warehouseController");
+const warehouseController = require("../controller/warehouse");
 
 // POST /api/warehouse/add
 router.post("/warehouse/add", warehouseController.addWarehouse);

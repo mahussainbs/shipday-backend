@@ -10,7 +10,7 @@ const {
   updateUserProfile,
   getUserByEmail,
   getAllCustomers
-} = require('../controller/authController');
+} = require('../controller/auth');
 
 const authMiddleware = require('../middleware/authMiddleware');
 

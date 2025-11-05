@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const controller = require("../controller/warehouseStaffController");
+const controller = require("../controller/warehouseStaff");
 
 router.get("/:warehouseId", controller.getWarehouseStaff);
 router.post("/assign", controller.assignStaff);

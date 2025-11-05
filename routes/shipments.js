@@ -6,8 +6,8 @@ const {
   updateOrderStatus,
   getShipmentMetrics,
   getShipmentStatusBreakdown
-} = require('../controller/shipmentController');
-const { createShipment, getShipmentById, updateShipment } = require('../controller/adminController');
+} = require('../controller/shipment');
+const { createShipment, getShipmentById, updateShipment } = require('../controller/admin');
 
 // Shipment routes
 router.post('/generate', generateShipments);

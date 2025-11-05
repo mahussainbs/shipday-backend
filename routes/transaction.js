@@ -6,7 +6,7 @@ const {
   getTotalRevenue,
   getMonthlyRevenue,
   getMonthlyRevenueBreakdown,
-} = require("../controller/transactionController");
+} = require("../controller/transaction");
 
 router.post("/create", createTransaction);
 router.get("/all", getAllTransactions);
