@@ -5,7 +5,9 @@ const allowedOrigins = [
   'https://lemon-moss-0af8f730f.1.azurestaticapps.net',
   'http://192.168.0.54:8081',
   'http://192.168.0.54:5000',
-];
+  process.env.PRODUCTION_FRONTEND_URL,
+  process.env.MOBILE_APP_URL,
+].filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
