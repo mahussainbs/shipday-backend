@@ -276,17 +276,23 @@ const getDriverNotifications = async (req, res) => {
   const { driverId } = req.params;
   
   try {
+    console.log('Looking for driver with ID:', driverId);
     const driver = await Driver.findOne({ driverId });
+    console.log('Driver found:', driver ? 'Yes' : 'No');
+    
     if (!driver) {
       return res.status(404).json({ message: 'Driver not found' });
     }
 
+    console.log('Driver ObjectId:', driver._id);
     const notifications = await Notification.find({ userId: driver._id })
       .sort({ createdAt: -1 });
     
+    console.log('Notifications found:', notifications.length);
     res.status(200).json({ notifications });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error in getDriverNotifications:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
@@ -341,6 +347,83 @@ const updateShipmentStatus = async (req, res) => {
   }
 };
 
+// Update driver FCM token
+const updateDriverFCMToken = async (req, res) => {
+  const { driverId } = req.params;
+  const { fcmToken } = req.body;
+  
+  if (!fcmToken) {
+    return res.status(400).json({ message: 'FCM token is required' });
+  }
+
+  try {
+    const driver = await Driver.findOneAndUpdate(
+      { driverId },
+      { fcmToken },
+      { new: true }
+    );
+
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    res.status(200).json({ 
+      message: 'FCM token updated successfully'
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Test push notification
+const testPushNotification = async (req, res) => {
+  const { driverId } = req.params;
+  
+  try {
+    const driver = await Driver.findOne({ driverId });
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    if (!driver.fcmToken) {
+      return res.status(400).json({ message: 'Driver has no FCM token' });
+    }
+
+    const { sendPushNotification } = require('../utils/pushNotification');
+    await sendPushNotification(
+      driver.fcmToken,
+      'Test Notification',
+      'This is a test push notification for driver ' + driver.username,
+      { type: 'test' }
+    );
+
+    res.status(200).json({ 
+      message: 'Test push notification sent successfully'
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Check if driver exists
+const checkDriver = async (req, res) => {
+  const { driverId } = req.params;
+  
+  try {
+    const driver = await Driver.findOne({ driverId }).select('-password');
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    res.status(200).json({ 
+      message: 'Driver found',
+      driver
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 module.exports = {
   requestDriverVerificationCode,
   registerDriver,
@@ -348,4 +431,7 @@ module.exports = {
   getDriverNotifications,
   getDriverShipments,
   updateShipmentStatus,
+  updateDriverFCMToken,
+  testPushNotification,
+  checkDriver,
 };

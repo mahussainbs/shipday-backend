@@ -47,6 +47,10 @@ const driverSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
+  },
+  fcmToken: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true

@@ -2,6 +2,7 @@ const Driver = require('../models/Driver');
 const Notification = require('../models/Notification');
 const Shipment = require('../models/Shipment');
 const Order = require('../models/Order');
+const { sendPushNotification } = require('../utils/pushNotification');
 
 // Get drivers by vehicle type
 const getDriversByVehicleType = async (req, res) => {
@@ -198,6 +199,38 @@ const assignShipmentToDriver = async (req, res) => {
       type: 'shipment_assigned'
     });
     await notification.save();
+
+    // Send push notification if driver has FCM token
+    if (driver.fcmToken) {
+      try {
+        await sendPushNotification(
+          driver.fcmToken,
+          'New Shipment Assigned',
+          `You have been assigned shipment ${shipmentId} from ${shipment.start} to ${shipment.end}`,
+          {
+            shipmentId,
+            type: 'shipment_assigned',
+            start: shipment.start,
+            end: shipment.end
+          }
+        );
+        console.log(`Push notification sent to driver ${driver.username}`);
+      } catch (pushError) {
+        console.error('Failed to send push notification:', pushError.message);
+      }
+    } else {
+      console.log(`No FCM token for driver ${driver.username}`);
+    }
+
+    // Emit socket notification
+    const io = req.app?.get('io');
+    if (io) {
+      io.emit('shipment-assigned', {
+        driverId: driver.driverId,
+        shipmentId,
+        notification
+      });
+    }
 
     res.status(200).json({ 
       message: 'Shipment assigned successfully',

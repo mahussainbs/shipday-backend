@@ -7,6 +7,9 @@ const {
   getDriverNotifications,
   getDriverShipments,
   updateShipmentStatus,
+  updateDriverFCMToken,
+  testPushNotification,
+  checkDriver,
 } = require('../controller/driver');
 const upload = require('../middleware/upload');
 
@@ -27,5 +30,14 @@ router.get('/shipments/:driverId', getDriverShipments);
 
 // Update shipment status
 router.put('/update-shipment-status', updateShipmentStatus);
+
+// Update driver FCM token
+router.put('/fcm-token/:driverId', updateDriverFCMToken);
+
+// Test push notification
+router.post('/test-notification/:driverId', testPushNotification);
+
+// Check if driver exists
+router.get('/check/:driverId', checkDriver);
 
 module.exports = router;
