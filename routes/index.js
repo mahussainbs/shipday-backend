@@ -39,6 +39,6 @@ router.use('/roles', roleRoutes);
 router.use('/company-info', companyInfoRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/wallets', walletRoutes);
-router.use('/drivers', driverRoutes);
+router.use('/driver', driverRoutes);
 
 module.exports = router;
