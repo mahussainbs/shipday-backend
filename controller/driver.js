@@ -239,12 +239,7 @@ const loginDriver = async (req, res) => {
       { expiresIn: '2h' }
     );
 
-    await createNotification(
-      driver._id, 
-      "Login Successful", 
-      "You have logged in to your driver account.", 
-      "login"
-    );
+
 
     res.status(200).json({
       message: 'Login successful',
@@ -285,10 +280,17 @@ const getDriverNotifications = async (req, res) => {
     }
 
     console.log('Driver ObjectId:', driver._id);
+    console.log('Driver ObjectId as string:', driver._id.toString());
+    
+    // Get all notifications for debugging
+    const allNotifications = await Notification.find({}).sort({ createdAt: -1 });
+    console.log('Total notifications in DB:', allNotifications.length);
+    console.log('All notification userIds:', allNotifications.map(n => ({ userId: n.userId?.toString(), type: n.type, title: n.title })));
+    
     const notifications = await Notification.find({ userId: driver._id })
       .sort({ createdAt: -1 });
     
-    console.log('Notifications found:', notifications.length);
+    console.log('Notifications found for driver:', notifications.length);
     res.status(200).json({ notifications });
   } catch (err) {
     console.error('Error in getDriverNotifications:', err);
@@ -504,6 +506,35 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Test notification creation for driver
+const createTestNotification = async (req, res) => {
+  const { driverId } = req.params;
+  
+  try {
+    const driver = await Driver.findOne({ driverId });
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    const notification = new Notification({
+      userId: driver._id,
+      title: 'Test Notification',
+      message: 'This is a test notification to verify the system works.',
+      type: 'shipment_assigned'
+    });
+    
+    await notification.save();
+    console.log('Test notification created for driver:', driver.driverId);
+    
+    res.status(200).json({ 
+      message: 'Test notification created successfully',
+      notification
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 module.exports = {
   requestDriverVerificationCode,
   registerDriver,
@@ -516,4 +547,5 @@ module.exports = {
   checkDriver,
   forgotPassword,
   resetPassword,
+  createTestNotification,
 };

@@ -203,7 +203,7 @@ const loginUser = async (req, res) => {
     tokenDoc.expiresAt = new Date(tokenDoc.createdAt.getTime() + 1 * 60 * 1000); // 1 min
     await tokenDoc.save();
  
-    await createNotification(user._id, "Login Successful", "You have logged in to your account.", "login");
+
  
     res.status(200).json({
       message: 'Login successful',

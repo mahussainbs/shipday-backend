@@ -12,6 +12,7 @@ const {
   checkDriver,
   forgotPassword,
   resetPassword,
+  createTestNotification,
 } = require('../controller/driver');
 const upload = require('../middleware/upload');
 
@@ -47,5 +48,8 @@ router.post('/forgot-password', forgotPassword);
 
 // Reset password
 router.post('/reset-password', resetPassword);
+
+// Create test notification
+router.post('/create-test-notification/:driverId', createTestNotification);
 
 module.exports = router;

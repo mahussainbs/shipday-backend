@@ -192,13 +192,19 @@ const assignShipmentToDriver = async (req, res) => {
     ).populate('driver', 'username driverId');
 
     // Create notification for driver
+    console.log('Creating notification for driver ObjectId:', driver._id);
+    console.log('Driver details:', { driverId: driver.driverId, username: driver.username });
+    
     const notification = new Notification({
       userId: driver._id,
       title: 'New Shipment Assigned',
       message: `Shipment ID: ${shipmentId}\nFrom: ${shipment.start}\nTo: ${shipment.end}\nPackage: ${shipment.packageType}\nWeight: ${shipment.parcelWeight}kg\nETA: ${shipment.eta}\nNotes: ${shipment.notes || 'None'}`,
       type: 'shipment_assigned'
     });
-    await notification.save();
+    
+    const savedNotification = await notification.save();
+    console.log('Notification saved successfully:', savedNotification._id);
+    console.log('Notification userId:', savedNotification.userId);
 
     // Send push notification if driver has FCM token
     if (driver.fcmToken) {
