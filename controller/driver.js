@@ -285,14 +285,35 @@ const getDriverNotifications = async (req, res) => {
     // Get all notifications for debugging
     const allNotifications = await Notification.find({}).sort({ createdAt: -1 });
     console.log('Total notifications in DB:', allNotifications.length);
-    console.log('All notification userIds:', allNotifications.map(n => ({ userId: n.userId?.toString(), type: n.type, title: n.title })));
+    console.log('All notification userIds:', allNotifications.map(n => ({ 
+      userId: n.userId?.toString(), 
+      type: n.type, 
+      title: n.title,
+      message: n.message.substring(0, 50) + '...' 
+    })));
     
+    // Try both exact match and string comparison
     const notifications = await Notification.find({ 
       userId: driver._id,
-      type: { $ne: 'login' } // Exclude login notifications
+      type: 'shipment_assigned'
     }).sort({ createdAt: -1 });
     
     console.log('Notifications found for driver:', notifications.length);
+    
+    // If still no notifications, check for shipment-related notifications by message content
+    if (notifications.length === 0) {
+      const shipmentNotifications = await Notification.find({
+        type: 'shipment_assigned',
+        message: { $regex: 'SHP900155', $options: 'i' }
+      }).sort({ createdAt: -1 });
+      
+      console.log('Shipment notifications found by message search:', shipmentNotifications.length);
+      if (shipmentNotifications.length > 0) {
+        console.log('Found shipment notification with userId:', shipmentNotifications[0].userId?.toString());
+        console.log('Expected userId:', driver._id.toString());
+      }
+    }
+    
     res.status(200).json({ notifications });
   } catch (err) {
     console.error('Error in getDriverNotifications:', err);
@@ -541,10 +562,54 @@ const createTestNotification = async (req, res) => {
     
     await notification.save();
     console.log('Test notification created for driver:', driver.driverId);
+    console.log('Notification userId:', notification.userId);
+    console.log('Driver ObjectId:', driver._id);
     
     res.status(200).json({ 
       message: 'Test notification created successfully',
       notification
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Debug function to check notification-driver relationship
+const debugNotifications = async (req, res) => {
+  const { driverId } = req.params;
+  
+  try {
+    const driver = await Driver.findOne({ driverId });
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    // Get all notifications
+    const allNotifications = await Notification.find({}).sort({ createdAt: -1 });
+    
+    // Get notifications for this driver
+    const driverNotifications = await Notification.find({ userId: driver._id });
+    
+    // Check for shipment SHP900155 specifically
+    const shipmentNotifications = await Notification.find({
+      message: { $regex: 'SHP900155', $options: 'i' }
+    });
+    
+    res.status(200).json({
+      driverInfo: {
+        driverId: driver.driverId,
+        objectId: driver._id.toString(),
+        username: driver.username
+      },
+      totalNotifications: allNotifications.length,
+      driverNotifications: driverNotifications.length,
+      shipmentNotifications: shipmentNotifications.map(n => ({
+        id: n._id,
+        userId: n.userId?.toString(),
+        title: n.title,
+        type: n.type,
+        message: n.message.substring(0, 100)
+      }))
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -565,4 +630,5 @@ module.exports = {
   resetPassword,
   createTestNotification,
   cleanupLoginNotifications,
+  debugNotifications,
 };

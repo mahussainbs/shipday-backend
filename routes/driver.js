@@ -14,6 +14,7 @@ const {
   resetPassword,
   createTestNotification,
   cleanupLoginNotifications,
+  debugNotifications,
 } = require('../controller/driver');
 const upload = require('../middleware/upload');
 
@@ -55,5 +56,8 @@ router.post('/create-test-notification/:driverId', createTestNotification);
 
 // Cleanup login notifications
 router.delete('/cleanup-login-notifications', cleanupLoginNotifications);
+
+// Debug notifications
+router.get('/debug-notifications/:driverId', debugNotifications);
 
 module.exports = router;
