@@ -287,8 +287,10 @@ const getDriverNotifications = async (req, res) => {
     console.log('Total notifications in DB:', allNotifications.length);
     console.log('All notification userIds:', allNotifications.map(n => ({ userId: n.userId?.toString(), type: n.type, title: n.title })));
     
-    const notifications = await Notification.find({ userId: driver._id })
-      .sort({ createdAt: -1 });
+    const notifications = await Notification.find({ 
+      userId: driver._id,
+      type: { $ne: 'login' } // Exclude login notifications
+    }).sort({ createdAt: -1 });
     
     console.log('Notifications found for driver:', notifications.length);
     res.status(200).json({ notifications });
@@ -506,6 +508,20 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Clean up login notifications
+const cleanupLoginNotifications = async (req, res) => {
+  try {
+    const result = await Notification.deleteMany({ type: 'login' });
+    console.log('Deleted login notifications:', result.deletedCount);
+    
+    res.status(200).json({ 
+      message: `Successfully deleted ${result.deletedCount} login notifications`
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 // Test notification creation for driver
 const createTestNotification = async (req, res) => {
   const { driverId } = req.params;
@@ -548,4 +564,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   createTestNotification,
+  cleanupLoginNotifications,
 };
