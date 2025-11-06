@@ -10,6 +10,8 @@ const {
   updateDriverFCMToken,
   testPushNotification,
   checkDriver,
+  forgotPassword,
+  resetPassword,
 } = require('../controller/driver');
 const upload = require('../middleware/upload');
 
@@ -39,5 +41,11 @@ router.post('/test-notification/:driverId', testPushNotification);
 
 // Check if driver exists
 router.get('/check/:driverId', checkDriver);
+
+// Forgot password
+router.post('/forgot-password', forgotPassword);
+
+// Reset password
+router.post('/reset-password', resetPassword);
 
 module.exports = router;

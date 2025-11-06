@@ -424,6 +424,86 @@ const checkDriver = async (req, res) => {
   }
 };
 
+// Forgot password - send reset code
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  const sanitizedEmail = validateEmail(email);
+  
+  if (!sanitizedEmail) {
+    return res.status(400).json({ message: 'Valid email is required' });
+  }
+
+  try {
+    const driver = await Driver.findOne({ email: sanitizedEmail });
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found with this email' });
+    }
+
+    await sendVerificationCode(sanitizedEmail);
+    res.status(200).json({ message: 'Password reset code sent to your email' });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ message: 'Failed to send reset code' });
+  }
+};
+
+// Reset password with verification code
+const resetPassword = async (req, res) => {
+  const { email, code, newPassword } = req.body;
+  const sanitizedEmail = validateEmail(email);
+  
+  if (!sanitizedEmail || !code || !newPassword) {
+    return res.status(400).json({ message: 'Email, verification code, and new password are required' });
+  }
+
+  if (!strongPasswordRegex.test(newPassword)) {
+    return res.status(400).json({
+      message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
+    });
+  }
+
+  try {
+    const record = await VerificationCode.findOne({ email: sanitizedEmail });
+    if (!record) {
+      return res.status(400).json({ message: 'Verification code not found' });
+    }
+
+    if (record.expiresAt < new Date()) {
+      await VerificationCode.deleteOne({ email: sanitizedEmail });
+      return res.status(400).json({ message: 'Verification code expired' });
+    }
+
+    if (record.code !== code) {
+      return res.status(400).json({ message: 'Invalid verification code' });
+    }
+
+    const driver = await Driver.findOne({ email: sanitizedEmail });
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await Driver.findOneAndUpdate(
+      { email: sanitizedEmail },
+      { password: hashedPassword }
+    );
+
+    await VerificationCode.deleteOne({ email: sanitizedEmail });
+
+    await createNotification(
+      driver._id,
+      "Password Reset Successful",
+      "Your password has been successfully reset.",
+      "security"
+    );
+
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ message: 'Password reset failed' });
+  }
+};
+
 module.exports = {
   requestDriverVerificationCode,
   registerDriver,
@@ -434,4 +514,6 @@ module.exports = {
   updateDriverFCMToken,
   testPushNotification,
   checkDriver,
+  forgotPassword,
+  resetPassword,
 };
