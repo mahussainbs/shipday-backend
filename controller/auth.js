@@ -4,42 +4,42 @@ const Order = require('../models/Order');
 const Notification = require('../models/Notification');
 const sendMail = require("../utils/mail");
 const Token = require('../models/Token');
- 
+
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
- 
+
 // Password strength regex
 const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
- 
+
 //  Email validator
 const validateEmail = (email) => {
   const sanitized = String(email).toLowerCase().trim();
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(sanitized) ? sanitized : null;
 };
- 
+
 //  Customer ID validator
 const validateCustomerId = (id) => {
   return /^CUST\d{3,}$/.test(id) ? id : null;
 };
- 
+
 // Generate and send verification code
 const sendVerificationCode = async (email) => {
   const code = Math.random().toString(36).substring(2, 7).toUpperCase();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 min expiry
- 
+
   await VerificationCode.findOneAndUpdate(
     { email },
     { code, expiresAt },
     { upsert: true, new: true }
   );
- 
+
   const text = `Your verification code is: ${code}. It will expire in 15 minutes.`;
- 
+
   await sendMail(email, "Your Verification Code", text);
 };
- 
+
 // Helper to create notification
 const createNotification = async (userId, title, message, type) => {
   try {
@@ -54,7 +54,7 @@ const createNotification = async (userId, title, message, type) => {
     console.error("Notification creation failed:", err);
   }
 };
- 
+
 // Generate unique customerId
 const generateCustomerId = async () => {
   const count = await User.countDocuments();
@@ -62,24 +62,24 @@ const generateCustomerId = async () => {
   const padded = String(nextNumber).padStart(3, '0');
   return `CUST${padded}`;
 };
- 
+
 // Request verification code
 const requestVerificationCode = async (req, res) => {
   const { email, source } = req.body;
   const sanitizedEmail = validateEmail(email);
   if (!sanitizedEmail) return res.status(400).json({ message: 'Valid email is required' });
- 
+
   try {
     const userExists = await User.findOne({ email: sanitizedEmail });
- 
+
     if (source === 'register' && userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
- 
+
     if (source === 'forgot' && !userExists) {
       return res.status(404).json({ message: 'User not found' });
     }
- 
+
     await sendVerificationCode(sanitizedEmail);
     res.status(200).json({ message: 'Verification code sent' });
   } catch (err) {
@@ -87,27 +87,27 @@ const requestVerificationCode = async (req, res) => {
     res.status(500).json({ message: 'Failed to send verification code' });
   }
 };
- 
+
 // Verify code
 const verifyCode = async (req, res) => {
   const { email, code } = req.body;
   const sanitizedEmail = validateEmail(email);
   if (!sanitizedEmail || !code)
     return res.status(400).json({ message: 'Valid email and code are required' });
- 
+
   try {
     const record = await VerificationCode.findOne({ email: sanitizedEmail });
     if (!record)
       return res.status(400).json({ message: 'Verification code not found' });
- 
+
     if (record.expiresAt < new Date()) {
       await VerificationCode.deleteOne({ email: sanitizedEmail });
       return res.status(400).json({ message: 'Verification code expired' });
     }
- 
+
     if (record.code !== code.toUpperCase())
       return res.status(400).json({ message: 'Invalid verification code' });
- 
+
     await VerificationCode.deleteOne({ email: sanitizedEmail });
     res.status(200).json({ message: 'Verification successful' });
   } catch (err) {
@@ -115,42 +115,42 @@ const verifyCode = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
- 
+
 // Register user
 const registerUser = async (req, res) => {
   const { email, password, code } = req.body;
   const sanitizedEmail = validateEmail(email);
- 
+
   if (!sanitizedEmail || !password || !code)
     return res.status(400).json({ message: 'Valid email, password, and code are required' });
- 
+
   if (!strongPasswordRegex.test(password)) {
     return res.status(400).json({
       message:
         'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
     });
   }
- 
+
   try {
     const existingUser = await User.findOne({ email: sanitizedEmail });
     if (existingUser)
       return res.status(400).json({ message: 'User already exists' });
- 
+
     const record = await VerificationCode.findOne({ email: sanitizedEmail });
     if (!record)
       return res.status(400).json({ message: 'Verification code not found' });
- 
+
     if (record.expiresAt < new Date()) {
       await VerificationCode.deleteOne({ email: sanitizedEmail });
       return res.status(400).json({ message: 'Verification code expired' });
     }
- 
+
     if (record.code !== code.toUpperCase()) {
       return res.status(400).json({ message: 'Invalid verification code' });
     }
- 
+
     await VerificationCode.deleteOne({ email: sanitizedEmail });
- 
+
     const customerId = await generateCustomerId();
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
@@ -158,53 +158,50 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
       customerId,
     });
- 
+
     await user.save();
- 
+
     await createNotification(
       user._id,
       "Welcome to SwiftShip",
       `Your account (${sanitizedEmail}) has been successfully registered.`,
       "registration"
     );
- 
+
     res.status(201).json({ message: 'User registered successfully', customerId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
- 
+
 // Login user
 const loginUser = async (req, res) => {
-    console.log("Loged in");
- 
   const { email, password } = req.body;
-  console.log("Loged in");
- 
+
   const sanitizedEmail = validateEmail(email);
- 
+
   if (!sanitizedEmail || !password)
     return res.status(400).json({ message: 'Valid email and password are required' });
- 
+
   try {
     const user = await User.findOne({ email: sanitizedEmail });
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
- 
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
- 
+
     const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '2h' });
- 
+
     // create Token document
     const tokenDoc = await Token.create({ userId: user._id, token });
-   
-    //  Set expiresAt relative to createdAt
-    tokenDoc.expiresAt = new Date(tokenDoc.createdAt.getTime() + 1 * 60 * 1000); // 1 min
-    await tokenDoc.save();
- 
 
- 
+    //  Set expiresAt relative to createdAt
+    tokenDoc.expiresAt = new Date(tokenDoc.createdAt.getTime() + 2 * 60 * 60 * 1000); // 2 hours
+    await tokenDoc.save();
+
+
+
     res.status(200).json({
       message: 'Login successful',
       token,
@@ -215,12 +212,12 @@ const loginUser = async (req, res) => {
     res.status(500).json({ message: 'Login error' });
   }
 };
- 
+
 //  Logout user
 const logoutUser = async (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Token missing" });
- 
+
   try {
     await Token.deleteOne({ token });
     res.status(200).json({ message: "Logged out successfully" });
@@ -229,65 +226,65 @@ const logoutUser = async (req, res) => {
     res.status(401).json({ message: "Invalid or expired token" });
   }
 };
- 
+
 //  Reset password
 const resetPassword = async (req, res) => {
   const { email, newPassword } = req.body;
   const sanitizedEmail = validateEmail(email);
- 
+
   if (!sanitizedEmail || !newPassword) {
     return res.status(400).json({ message: 'Valid email and new password are required' });
   }
- 
+
   if (!strongPasswordRegex.test(newPassword)) {
     return res.status(400).json({
       message:
         'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
     });
   }
- 
+
   try {
     const user = await User.findOne({ email: sanitizedEmail });
     if (!user) return res.status(404).json({ message: 'User not found' });
- 
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
- 
+
     await Token.deleteMany({ userId: user._id });
- 
+
     await createNotification(
       user._id,
       "Password Reset",
       `Your account password has been successfully reset.`,
       "forgot-password"
     );
- 
+
     res.status(200).json({ message: 'Password reset successful. Please log in again.' });
   } catch (err) {
     console.error('Reset error:', err);
     res.status(500).json({ message: 'Server error during password reset' });
   }
 };
- 
+
 //  Update user profile
 const updateUserProfile = async (req, res) => {
   const { email, fullName, nickName, dob, phone, gender, image } = req.body;
   const sanitizedEmail = validateEmail(email);
- 
+
   if (!sanitizedEmail) return res.status(400).json({ message: 'Valid email is required' });
- 
+
   try {
     const user = await User.findOne({ email: sanitizedEmail });
     if (!user) return res.status(404).json({ message: 'User not found' });
- 
+
     user.fullName = fullName || user.fullName;
     user.nickName = nickName || user.nickName;
     user.dob = dob || user.dob;
     user.phone = phone || user.phone;
     user.gender = gender || user.gender;
     user.image = image || user.image;
- 
+
     await user.save();
     await createNotification(
       user._id,
@@ -301,34 +298,34 @@ const updateUserProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error while updating profile' });
   }
 };
- 
+
 // Save user location
 const saveUserLocation = async (req, res) => {
   const { place } = req.body;
   if (!place) return res.status(400).json({ message: 'Place is required' });
- 
+
   try {
     const user = await User.findOne().sort({ createdAt: -1 });
     if (!user) return res.status(404).json({ message: 'User not found' });
- 
+
     const resGeo = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(place)}&format=json&limit=1`
     );
     const data = await resGeo.json();
- 
+
     if (!data || data.length === 0) {
       return res.status(404).json({ message: 'No location found for the given place' });
     }
- 
+
     const { lat, lon, display_name } = data[0];
     user.location = {
       latitude: parseFloat(lat),
       longitude: parseFloat(lon),
       address: display_name || place,
     };
- 
+
     await user.save();
- 
+
     res.status(200).json({
       message: 'Location saved successfully',
       user: user.email,
@@ -339,35 +336,35 @@ const saveUserLocation = async (req, res) => {
     res.status(500).json({ message: 'Server error while saving location' });
   }
 };
- 
+
 //  Get user by email
 const getUserByEmail = async (req, res) => {
   const sanitizedEmail = validateEmail(req.query.email);
   if (!sanitizedEmail) return res.status(400).json({ message: 'Valid email is required' });
- 
+
   try {
     const user = await User.findOne({ email: sanitizedEmail }).select('-password -__v');
     if (!user) return res.status(404).json({ message: 'User not found' });
- 
+
     res.status(200).json({ user });
   } catch (err) {
     console.error('Get user error:', err);
     res.status(500).json({ message: 'Server error while fetching user' });
   }
 };
- 
+
 //  Get all customers
 const getAllCustomers = async (req, res) => {
   try {
     const users = await User.find();
     const orders = await Order.find();
- 
+
     const enrichedUsers = users.map((user) => {
       const userOrders = orders.filter(
         (order) =>
           order.senderEmail === user.email || order.senderPhone === user.phone
       );
- 
+
       return {
         customerId: user.customerId,
         fullName: user.fullName,
@@ -376,26 +373,26 @@ const getAllCustomers = async (req, res) => {
         totalOrders: userOrders.length,
       };
     });
- 
+
     res.status(200).json({ customers: enrichedUsers });
   } catch (error) {
     console.error("Error fetching customers", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
- 
+
 //  Get single customer by ID
 const getCustomerById = async (req, res) => {
   const id = validateCustomerId(req.params.id);
   if (!id) return res.status(400).json({ message: "Invalid customer ID format" });
- 
+
   try {
     const user = await User.findOne({ customerId: id });
- 
+
     if (!user) return res.status(404).json({ message: "User not found" });
- 
+
     const userOrders = await Order.find({ senderEmail: user.email });
- 
+
     res.json({
       id: user.customerId,
       name: user.fullName,
@@ -414,18 +411,18 @@ const getCustomerById = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
- 
+
 // Google Login
 const googleLogin = async (req, res) => {
   const { email, fullName, image } = req.body;
   const sanitizedEmail = validateEmail(email);
   if (!sanitizedEmail) return res.status(400).json({ message: "Valid email is required" });
- 
+
   try {
     let user = await User.findOne({ email: sanitizedEmail });
- 
+
     const base64Image = await convertImageToBase64(image);
- 
+
     if (!user) {
       const customerId = await generateCustomerId();
       user = new User({
@@ -442,18 +439,18 @@ const googleLogin = async (req, res) => {
         await user.save();
       }
     }
- 
+
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1m" }
+      { expiresIn: "2h" }
     );
- 
+
     //  create Token with expiresAt relative to createdAt
     const tokenDoc = await Token.create({ userId: user._id, token });
-    tokenDoc.expiresAt = new Date(tokenDoc.createdAt.getTime() + 1 * 60 * 1000); // 1 min
+    tokenDoc.expiresAt = new Date(tokenDoc.createdAt.getTime() + 2 * 60 * 60 * 1000); // 2 hours
     await tokenDoc.save();
- 
+
     res.status(200).json({
       message: "Google login successful",
       token,
@@ -466,10 +463,11 @@ const googleLogin = async (req, res) => {
     });
   } catch (err) {
     console.error("Google login error:", err);
-    res.status(500).json({ message: "Google login failed" });
+    console.error("Error details:", err.message);
+    res.status(500).json({ message: "Google login failed", error: err.message });
   }
 };
- 
+
 // 🔧 Helper to convert image to Base64
 const convertImageToBase64 = async (url) => {
   try {
@@ -483,7 +481,7 @@ const convertImageToBase64 = async (url) => {
     return null;
   }
 };
- 
+
 //  Export all
 module.exports = {
   requestVerificationCode,

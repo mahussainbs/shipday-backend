@@ -11,7 +11,9 @@ const {
   getShipmentById,
   getDriversByVehicleType,
   updateShipment,
-  deleteShipment
+  deleteShipment,
+  downloadWaybill,
+  downloadPOD
 } = require('../controller/admin');
 
 // Driver routes
@@ -28,5 +30,7 @@ router.post('/shipments', createShipment);
 router.patch('/shipments/:shipmentId', updateShipment);
 router.delete('/shipments/:shipmentId', deleteShipment);
 router.post('/shipments/assign', assignShipmentToDriver);
+router.get('/shipments/:shipmentId/waybill', downloadWaybill);
+router.get('/shipments/:shipmentId/pod', downloadPOD);
 
 module.exports = router;

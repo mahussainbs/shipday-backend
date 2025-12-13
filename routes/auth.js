@@ -9,7 +9,8 @@ const {
   verifyCode,
   updateUserProfile,
   getUserByEmail,
-  getAllCustomers
+  getAllCustomers,
+  googleLogin
 } = require('../controller/auth');
 
 const authMiddleware = require('../middleware/authMiddleware');
@@ -17,6 +18,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 // Authentication routes
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.post('/google-login', googleLogin);
 router.post('/logout', authMiddleware, logoutUser);
 router.post('/reset-password', resetPassword);
 

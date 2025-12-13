@@ -6,7 +6,7 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Ensure this is defined 
 
 exports.createPaymentIntent = async (req, res) => {
   try {
-    const { amount,userId } = req.body;
+    const { amount, userId } = req.body;
 
     if (!amount || isNaN(amount)) {
       return res.status(400).json({ error: 'Amount is required and must be a number' });
@@ -47,5 +47,44 @@ exports.createPaymentIntent = async (req, res) => {
   } catch (err) {
     console.error('Stripe Payment Error:', err);
     res.status(500).json({ error: 'Payment intent creation failed' });
+  }
+};
+
+const Shipment = require('../models/Shipment');
+const { generatePaymentData } = require('../utils/payfast');
+
+exports.initiatePayFastPayment = async (req, res) => {
+  try {
+    const { shipmentId } = req.body;
+
+    if (!shipmentId) {
+      return res.status(400).json({ message: 'Shipment ID is required' });
+    }
+
+    const shipment = await Shipment.findById(shipmentId);
+    if (!shipment) {
+      return res.status(404).json({ message: 'Shipment not found' });
+    }
+
+    const paymentInfo = generatePaymentData(shipment);
+
+    // Construct Query String for GET redirect
+    const queryParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(paymentInfo.data)) {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, value);
+      }
+    }
+
+    const redirectUrl = `${paymentInfo.url}?${queryParams.toString()}`;
+
+    res.status(200).json({
+      redirectUrl,
+      paymentData: paymentInfo.data // Sending data just in case frontend wants to use form POST later
+    });
+
+  } catch (error) {
+    console.error('PayFast Init Error:', error);
+    res.status(500).json({ message: 'Failed to initiate PayFast payment', error: error.message });
   }
 };

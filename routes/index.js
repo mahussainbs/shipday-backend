@@ -20,10 +20,12 @@ const companyInfoRoutes = require('./companyInfoRoutes');
 const notificationRoutes = require('./notificationRoutes');
 const walletRoutes = require('./walletRoutes');
 const driverRoutes = require('./driver');
+const pricingRoutes = require('./pricingRoutes');
 
 // Use routes
 router.use('/auth', authRoutes);
 router.use('/admin', adminRoutes);
+router.use('/pricing', pricingRoutes); // New Route
 router.use('/shipments', shipmentsRoutes);
 router.use('/verification', verificationRoutes);
 router.use('/payments', paymentRoutes);
