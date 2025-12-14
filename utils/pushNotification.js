@@ -10,7 +10,7 @@ try {
     // });
 
     // Option 2: Using environment variables (for development/deployment)
-    if (process.env.FIREBASE_PROJECT_ID) {
+    if (false && process.env.FIREBASE_PROJECT_ID) { // DISABLED FOR DEBUGGING
       // Clean up private key: handle escaped newlines, regular newlines, and remove quotes
       const privateKey = process.env.FIREBASE_PRIVATE_KEY
         ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/"/g, '')
