@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "main": "server.js",
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server",
-    "test": "echo \"No tests configured, but the process succeeded.\" && exit 0"
+    "test": "echo \"No tests configured, but the process succeeded.\" && exit 0",
+    "vercel-start": "node server.js"
   },
   "keywords": [],
   "author": "",
