@@ -23,7 +23,7 @@ const io = initializeSocket(server);
 
 // Make io accessible
 app.set('io', io);
- 
+
 // Health check endpoint
 app.get('/', (req, res) => {
   res.status(200).json({ message: 'Swift Ship API is running', timestamp: new Date().toISOString() });
@@ -31,22 +31,33 @@ app.get('/', (req, res) => {
 
 // Use routes
 app.use('/api', routes);
- 
-// DB Connection
-if (!process.env.MONGO_URI) {
-  console.error('❌ MONGO_URI environment variable is not set');
-  process.exit(1);
-}
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
+
+// DB Connection Logic
+const connectDB = async () => {
+  if (mongoose.connections[0].readyState) return;
+
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ MongoDB connected');
+  } catch (err) {
+    console.error('❌ DB Connection Error:', err.message);
+    process.exit(1);
+  }
+};
+
+// Export the app for Vercel
+module.exports = app;
+
+// Start server only if run directly (local dev)
+if (require.main === module) {
+  connectDB().then(() => {
     server.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
-  })
-  .catch(err => {
-    console.error('❌ DB Connection Error:', err.message);
-    process.exit(1);
   });
- 
+} else {
+  // For Vercel, ensure DB is connected before handling requests
+  // Note: Vercel might re-use the frozen instance, so we check connection state above
+  connectDB();
+} 
