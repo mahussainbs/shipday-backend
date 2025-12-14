@@ -2,7 +2,13 @@
 const Notification = require('../models/Notification');
 
 const Stripe = require('stripe');
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Ensure this is defined in your .env
+// Initialize Stripe safely - prevents crash if key is missing during deployment
+const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key_to_prevent_crash';
+const stripe = Stripe(stripeKey);
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.warn("⚠️ STRIPE_SECRET_KEY is missing! Payment features will fail.");
+}
 
 exports.createPaymentIntent = async (req, res) => {
   try {
