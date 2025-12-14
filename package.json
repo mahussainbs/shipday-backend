@@ -8,8 +8,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server",
-    "test": "echo \"No tests configured, but the process succeeded.\" && exit 0",
-    "vercel-start": "node server.js"
+    "test": "echo \"No tests configured, but the process succeeded.\" && exit 0"
   },
   "keywords": [],
   "author": "",
