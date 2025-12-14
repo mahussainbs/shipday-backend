@@ -9,6 +9,14 @@ const { initializeSocket } = require('./config/socket');
 const app = express();
 const PORT = process.env.PORT || process.env.WEBSITES_PORT || 5000;
 
+// --- DEBUGGING START ---
+console.log("🔍 --- DEBUGGING ENVIRONMENT VARIABLES ---");
+console.log("Current Environment Keys:", Object.keys(process.env).sort());
+console.log("MONGO_URI Type:", typeof process.env.MONGO_URI);
+console.log("STRIPE_KEY Present:", !!process.env.STRIPE_SECRET_KEY);
+console.log("🔍 --- DEBUGGING END ---");
+// --- DEBUGGING END ---
+
 // Middleware
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
