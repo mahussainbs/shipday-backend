@@ -36,7 +36,7 @@ app.use('/api', routes);
 // DB Connection
 if (!process.env.MONGO_URI) {
   console.error('❌ MONGO_URI environment variable is not set');
-  process.exit(1);
+  // process.exit(1); // COMMENTED OUT FOR DEPLOYMENT DEBUGGING
 }
 
 mongoose.connect(process.env.MONGO_URI)
@@ -48,6 +48,10 @@ mongoose.connect(process.env.MONGO_URI)
   })
   .catch(err => {
     console.error('❌ DB Connection Error:', err.message);
-    process.exit(1);
+    // process.exit(1); // COMMENTED OUT FOR DEPLOYMENT DEBUGGING
+
+    // Start server anyway so we can see logs/status
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${PORT} (WITHOUT DB)`);
+    });
   });
-  
