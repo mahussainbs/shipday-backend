@@ -8,14 +8,19 @@ try {
     // admin.initializeApp({
     //   credential: admin.credential.cert(serviceAccount)
     // });
-    
+
     // Option 2: Using environment variables (for development/deployment)
     if (process.env.FIREBASE_PROJECT_ID) {
+      // Clean up private key: handle escaped newlines, regular newlines, and remove quotes
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY
+        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/"/g, '')
+        : undefined;
+
       admin.initializeApp({
         credential: admin.credential.cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+          privateKey: privateKey
         })
       });
     } else {
