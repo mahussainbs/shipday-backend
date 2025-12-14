@@ -9,16 +9,9 @@ const { initializeSocket } = require('./config/socket');
 const app = express();
 const PORT = process.env.PORT || process.env.WEBSITES_PORT || 5000;
 
-// Request Logger (Re-added for stability check)
-app.use((req, res, next) => {
-  console.log(`➡️  ${req.method} ${req.url}`);
-  next();
-});
-
 // Middleware
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
-
 app.use(corsMiddleware);
 
 // Import routes
@@ -39,27 +32,33 @@ app.get('/', (req, res) => {
 // Use routes
 app.use('/api', routes);
 
-// DB Connection
+
+// DB Connection Logic
 const connectDB = async () => {
-  if (!process.env.MONGO_URI) {
-    console.warn('❌ MONGO_URI environment variable is not set');
-    return;
-  }
+  if (mongoose.connections[0].readyState) return;
 
   try {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ MongoDB connected');
   } catch (err) {
     console.error('❌ DB Connection Error:', err.message);
+    // Do NOT exit in serverless env, it causes Function Invocation Failed
+    // process.exit(1); 
   }
 };
 
-// Connect to DB (async, non-blocking)
-connectDB();
+// Export the app for Vercel
+module.exports = app;
 
-// Start Server IMMEDIATELY to satisfy Railway health check
-server.listen(PORT, '0.0.0.0', () => {
-  const address = server.address();
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 Binding Address: ${JSON.stringify(address)}`);
-});
+// Start server only if run directly (local dev)
+if (require.main === module) {
+  connectDB().then(() => {
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  });
+} else {
+  // For Vercel, ensure DB is connected before handling requests
+  // Note: Vercel might re-use the frozen instance, so we check connection state above
+  connectDB();
+} 
