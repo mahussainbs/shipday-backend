@@ -58,6 +58,6 @@ const connectDB = async () => {
 connectDB();
 
 // Start Server IMMEDIATELY to satisfy Railway health check
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
