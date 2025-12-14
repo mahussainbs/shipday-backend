@@ -9,12 +9,7 @@ const { initializeSocket } = require('./config/socket');
 const app = express();
 const PORT = process.env.PORT || process.env.WEBSITES_PORT || 5000;
 
-// 1. Simple Health Check (No Middleware) - For Debugging
-app.get('/health', (req, res) => {
-  res.status(200).send('OK (Direct)');
-});
-
-// Request Logger - MUST BE FIRST
+// Request Logger (Re-added for stability check)
 app.use((req, res, next) => {
   console.log(`➡️  ${req.method} ${req.url}`);
   next();
