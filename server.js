@@ -9,15 +9,15 @@ const { initializeSocket } = require('./config/socket');
 const app = express();
 const PORT = process.env.PORT || process.env.WEBSITES_PORT || 5000;
 
-// Middleware
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ limit: '5mb', extended: true }));
-
-// Request Logger
+// Request Logger - MUST BE FIRST
 app.use((req, res, next) => {
   console.log(`➡️  ${req.method} ${req.url}`);
   next();
 });
+
+// Middleware
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 app.use(corsMiddleware);
 
@@ -58,6 +58,6 @@ const connectDB = async () => {
 connectDB();
 
 // Start Server IMMEDIATELY to satisfy Railway health check
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
